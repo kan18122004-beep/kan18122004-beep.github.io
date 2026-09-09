@@ -200,17 +200,18 @@
 
     <div id="loading">
         <div class="spinner"></div>
-        <span>LOADING PORTFOLIO...</span>
+        <span id="loading-text">LOADING HOUSE MODEL...</span>
     </div>
 
     <div id="ui-container">
         <div class="header">
             <h1>kan18122004-beep</h1>
             <div class="subtitle">3D Developer & Technical Artist</div>
-            <p class="desc">Interactive 3D Portfolio นำเสนอโมเดล PBR คุณภาพสูง ระบบจำลองฝนตก และพื้นหินผสมหญ้าพร้อม Custom Shader ทำปฏิกิริยากับการเลื่อนเมาส์</p>
+            <p class="desc">Interactive 3D Portfolio นำเสนอโมเดลบ้านสไตล์ญี่ปุ่น (PBR) บนฐานหินผสมหญ้า พร้อมระบบฝนตก ปรับเวลากลางวัน-กลางคืน และ Custom Shader ปรับแต่งตามเมาส์</p>
             <div class="badge-container">
                 <span class="badge">Three.js</span>
                 <span class="badge">GLSL Shader</span>
+                <span class="badge">3D House</span>
                 <span class="badge">PBR Material</span>
             </div>
         </div>
@@ -240,19 +241,19 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
         import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
         // --- 1. SETUP SCENE, CAMERA, RENDERER ---
         const container = document.getElementById('webgl-container');
         const scene = new THREE.Scene();
         
-        // Fog Preset สำหรับกลางคืน
-        const fogNight = new THREE.FogExp2(0x0a0d14, 0.035);
-        const fogDay = new THREE.FogExp2(0x94a3b8, 0.015);
+        const fogNight = new THREE.FogExp2(0x0a0d14, 0.025);
+        const fogDay = new THREE.FogExp2(0x94a3b8, 0.012);
         scene.fog = fogNight;
 
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.set(0, 2.5, 7.5);
+        camera.position.set(0, 4, 12);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -267,27 +268,26 @@
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
         controls.maxPolarAngle = Math.PI / 2 - 0.01;
-        controls.minDistance = 2;
-        controls.maxDistance = 15;
-        controls.target.set(0, 1, 0);
+        controls.minDistance = 3;
+        controls.maxDistance = 20;
+        controls.target.set(0, 1.5, 0);
 
-        // --- 2. LIGHTING & ENVIRONMENT (Day/Night Presets) ---
-        const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.4);
+        // --- 2. LIGHTING & ENVIRONMENT ---
+        const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.5);
         scene.add(ambientLight);
 
         const mainLight = new THREE.DirectionalLight(0x38bdf8, 2.0);
-        mainLight.position.set(5, 12, 5);
+        mainLight.position.set(8, 15, 8);
         mainLight.castShadow = true;
         mainLight.shadow.mapSize.width = 2048;
         mainLight.shadow.mapSize.height = 2048;
         mainLight.shadow.bias = -0.0001;
         scene.add(mainLight);
 
-        const rimLight = new THREE.PointLight(0x818cf8, 3, 10);
-        rimLight.position.set(-4, 3, -3);
+        const rimLight = new THREE.PointLight(0x818cf8, 3, 12);
+        rimLight.position.set(-6, 4, -4);
         scene.add(rimLight);
 
-        // HDRI Environment Mapping
         new RGBELoader()
             .setPath('https://threejs.org/examples/textures/equirectangular/')
             .load('royal_esplanade_1k.hdr', function (texture) {
@@ -295,7 +295,7 @@
                 scene.environment = texture;
             });
 
-        // --- 3. ADVANCED GLSL SHADER (Interactive Ground with Moss & Ripple) ---
+        // --- 3. ADVANCED GLSL SHADER (Interactive Ground with Moss) ---
         const groundVertexShader = `
             uniform float uTime;
             uniform vec3 uMouseWorld;
@@ -334,7 +334,7 @@
                 vUv = uv;
                 vec3 pos = position;
                 
-                float rockNoise = snoise(pos.xz * 0.8) * 0.25 + snoise(pos.xz * 3.0) * 0.05;
+                float rockNoise = snoise(pos.xz * 0.5) * 0.3 + snoise(pos.xz * 2.0) * 0.08;
                 float dist = distance(pos.xz, uMouseWorld.xz);
                 float wave = sin(dist * 8.0 - uTime * 6.0) * exp(-dist * 1.5) * 0.15;
                 
@@ -343,7 +343,7 @@
                 vPosition = (modelMatrix * vec4(pos, 1.0)).xyz;
                 vNormal = normalMatrix * normal;
                 
-                vMossMask = smoothstep(0.0, 0.4, snoise(pos.xz * 2.5));
+                vMossMask = smoothstep(0.0, 0.4, snoise(pos.xz * 2.0));
                 vInteraction = exp(-dist * 2.0);
 
                 gl_Position = projectionMatrix * viewMatrix * vec4(vPosition, 1.0);
@@ -369,7 +369,7 @@
                 vec3 baseColor = mix(rockColor, mossColor, vMossMask);
                 baseColor += glowColor * vInteraction * 1.5;
 
-                vec3 lightDir = normalize(vec3(5.0, 10.0, 5.0));
+                vec3 lightDir = normalize(vec3(8.0, 15.0, 8.0));
                 float diff = max(dot(normal, lightDir), uIsNight > 0.5 ? 0.2 : 0.5);
                 
                 vec3 viewDir = normalize(cameraPosition - vPosition);
@@ -385,7 +385,7 @@
         const groundUniforms = {
             uTime: { value: 0 },
             uMouseWorld: { value: new THREE.Vector3(999, 0, 999) },
-            uIsNight: { value: 1.0 } // 1.0 = กลางคืน, 0.0 = กลางวัน
+            uIsNight: { value: 1.0 }
         };
 
         const groundMaterial = new THREE.ShaderMaterial({
@@ -394,23 +394,32 @@
             uniforms: groundUniforms,
         });
 
-        const groundGeometry = new THREE.PlaneGeometry(16, 16, 128, 128);
+        const groundGeometry = new THREE.PlaneGeometry(22, 22, 128, 128);
         groundGeometry.rotateX(-Math.PI / 2);
         const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
         groundMesh.receiveShadow = true;
         scene.add(groundMesh);
 
-        // --- 4. PUBLIC PBR MODEL LOADING ---
+        // --- 4. HOUSE 3D MODEL LOADING (WITH DRACO DECODER) ---
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+
         const loader = new GLTFLoader();
+        loader.setDRACOLoader(dracoLoader);
+
         const loadingEl = document.getElementById('loading');
-        const modelUrl = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb';
+        
+        // โมเดลบ้านอาคารสไตล์ญี่ปุ่น (Littlest Tokyo)
+        const houseModelUrl = 'https://threejs.org/examples/models/gltf/LittlestTokyo.glb';
+
+        let mixer; // Animation Mixer สำหรับโมเดลบ้านที่มีอนิเมชันเคลื่อนไหว
 
         loader.load(
-            modelUrl,
+            houseModelUrl,
             (gltf) => {
                 const model = gltf.scene;
-                model.position.set(0, 1.3, 0);
-                model.scale.set(1.2, 1.2, 1.2);
+                model.position.set(0, 0.2, 0);
+                model.scale.set(0.008, 0.008, 0.008); // ปรับ Scale ให้พอดีกับฉาก
                 
                 model.traverse((child) => {
                     if (child.isMesh) {
@@ -420,30 +429,45 @@
                 });
 
                 scene.add(model);
+
+                // เล่น Animation ของโมเดลบ้าน (รถไฟ/พัดลมหมุน/ไฟ)
+                if (gltf.animations && gltf.animations.length) {
+                    mixer = new THREE.AnimationMixer(model);
+                    mixer.clipAction(gltf.animations[0]).play();
+                }
                 
                 loadingEl.style.opacity = '0';
                 setTimeout(() => loadingEl.style.display = 'none', 500);
+            },
+            (xhr) => {
+                const percent = Math.round((xhr.loaded / xhr.total) * 100);
+                if (!isNaN(percent)) {
+                    document.getElementById('loading-text').innerText = `LOADING HOUSE MODEL... ${percent}%`;
+                }
+            },
+            (error) => {
+                console.error('An error happened loading the model:', error);
             }
         );
 
         // --- 5. RAIN SIMULATION SYSTEM ---
-        const rainCount = 3000;
+        const rainCount = 3500;
         const rainGeometry = new THREE.BufferGeometry();
         const rainPositions = new Float32Array(rainCount * 3);
         const rainVelocities = new Float32Array(rainCount);
 
         for (let i = 0; i < rainCount; i++) {
-            rainPositions[i * 3] = (Math.random() - 0.5) * 15;
-            rainPositions[i * 3 + 1] = Math.random() * 10 + 2;
-            rainPositions[i * 3 + 2] = (Math.random() - 0.5) * 15;
-            rainVelocities[i] = 0.15 + Math.random() * 0.1;
+            rainPositions[i * 3] = (Math.random() - 0.5) * 20;
+            rainPositions[i * 3 + 1] = Math.random() * 12 + 2;
+            rainPositions[i * 3 + 2] = (Math.random() - 0.5) * 20;
+            rainVelocities[i] = 0.18 + Math.random() * 0.12;
         }
 
         rainGeometry.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
 
         const rainMaterial = new THREE.PointsMaterial({
             color: 0x93c5fd,
-            size: 0.03,
+            size: 0.035,
             transparent: true,
             opacity: 0.6,
             blending: THREE.AdditiveBlending
@@ -452,7 +476,7 @@
         const rainParticles = new THREE.Points(rainGeometry, rainMaterial);
         scene.add(rainParticles);
 
-        let isRainActive = true; // สถานะการเปิด/ปิดฝน
+        let isRainActive = true;
 
         function updateRain() {
             if (!isRainActive) return;
@@ -461,18 +485,17 @@
             for (let i = 0; i < rainCount; i++) {
                 positions[i * 3 + 1] -= rainVelocities[i];
                 if (positions[i * 3 + 1] < 0) {
-                    positions[i * 3 + 1] = 10;
+                    positions[i * 3 + 1] = 12;
                 }
             }
             rainGeometry.attributes.position.needsUpdate = true;
         }
 
-        // --- 6. CONTROLS INTERACTION (Day/Night & Rain Toggle) ---
+        // --- 6. CONTROLS INTERACTION ---
         const btnRain = document.getElementById('btn-rain');
         const btnTime = document.getElementById('btn-time');
         let isNight = true;
 
-        // สลับฝน
         btnRain.addEventListener('click', () => {
             isRainActive = !isRainActive;
             rainParticles.visible = isRainActive;
@@ -480,24 +503,21 @@
             btnRain.innerText = isRainActive ? 'เปิด' : 'ปิด';
         });
 
-        // สลับกลางวัน / กลางคืน
         btnTime.addEventListener('click', () => {
             isNight = !isNight;
             groundUniforms.uIsNight.value = isNight ? 1.0 : 0.0;
 
             if (isNight) {
-                // โหมดกลางคืน
                 scene.fog = fogNight;
                 scene.background = null;
                 renderer.toneMappingExposure = 1.2;
                 ambientLight.color.setHex(0xdbeafe);
-                ambientLight.intensity = 0.4;
+                ambientLight.intensity = 0.5;
                 mainLight.color.setHex(0x38bdf8);
                 mainLight.intensity = 2.0;
                 rimLight.intensity = 3;
                 btnTime.innerText = 'กลางคืน 🌙';
             } else {
-                // โหมดกลางวัน
                 scene.fog = fogDay;
                 scene.background = new THREE.Color(0xcfe2fe);
                 renderer.toneMappingExposure = 1.0;
@@ -538,7 +558,11 @@
         function animate() {
             requestAnimationFrame(animate);
 
+            const delta = clock.getDelta();
             const elapsedTime = clock.getElapsedTime();
+
+            // Update Model Animations (ถ้ามี)
+            if (mixer) mixer.update(delta);
 
             groundUniforms.uTime.value = elapsedTime;
             updateRain();
