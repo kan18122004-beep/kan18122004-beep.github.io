@@ -207,12 +207,12 @@
         <div class="header">
             <h1>kan18122004-beep</h1>
             <div class="subtitle">3D Developer & Technical Artist</div>
-            <p class="desc">Interactive 3D Portfolio นำเสนอโมเดลบ้านสไตล์ญี่ปุ่น (PBR) บนพื้นถนนยางมะตอยเปียกน้ำ พร้อมระบบฝนตก ปรับเวลากลางวัน-กลางคืน และ Custom Shader ปรับแต่งตามเมาส์</p>
+            <p class="desc">Interactive 3D Portfolio นำเสนอโมเดลบ้านสไตล์ญี่ปุ่น (PBR) บนพื้นถนนปูนคอนกรีตเปียกน้ำ พร้อมร่องยาแนวแผ่นปูน ระบบฝนตก และ Custom Shader ปรับแต่งตามเมาส์</p>
             <div class="badge-container">
                 <span class="badge">Three.js</span>
-                <span class="badge">Road Shader</span>
+                <span class="badge">Concrete Shader</span>
                 <span class="badge">3D House</span>
-                <span class="badge">PBR Wet Asphalt</span>
+                <span class="badge">PBR Wet Concrete</span>
             </div>
         </div>
 
@@ -230,7 +230,7 @@
             </div>
 
             <div class="controls-hint">
-                💡 ใช้เมาส์คลิกซ้ายเพื่อหมุน / ล้อเมาส์เพื่อซูม / เลื่อนเมาส์เพื่อส่งคลื่นพลังลงบนพื้นถนน
+                💡 ใช้เมาส์คลิกซ้ายเพื่อหมุน / ล้อเมาส์เพื่อซูม / เลื่อนเมาส์เพื่อส่งคลื่นพลังลงบนพื้นถนนปูน
             </div>
         </div>
     </div>
@@ -295,7 +295,7 @@
                 scene.environment = texture;
             });
 
-        // --- 3. ADVANCED GLSL SHADER (Interactive Wet Asphalt Road) ---
+        // --- 3. ADVANCED GLSL SHADER (Interactive Wet Concrete Road) ---
         const groundVertexShader = `
             uniform float uTime;
             uniform vec3 uMouseWorld;
@@ -333,7 +333,7 @@
                 vUv = uv;
                 vec3 pos = position;
                 
-                // Micro Roughness / Ripples on Asphalt
+                // Micro Ripples from Mouse
                 float dist = distance(pos.xz, uMouseWorld.xz);
                 float wave = sin(dist * 10.0 - uTime * 6.0) * exp(-dist * 1.5) * 0.08;
                 
@@ -355,7 +355,7 @@
             varying vec3 vNormal;
             varying float vInteraction;
 
-            // Simplex Noise Generator for Asphalt Grain & Puddles
+            // Simplex Noise Generator
             vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
             vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
             vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
@@ -385,47 +385,50 @@
                 vec3 normal = normalize(vNormal);
                 vec2 st = vPosition.xz;
 
-                // 1. Asphalt Base Texture (เม็ดหินยางมะตอย)
-                float asphaltGrain = snoise(st * 40.0) * 0.05 + snoise(st * 120.0) * 0.02;
-                vec3 asphaltColor = mix(vec3(0.18, 0.18, 0.20), vec3(0.05, 0.05, 0.06), uIsNight) + vec3(asphaltGrain);
+                // 1. Concrete Base Color & Rough Grain (เนื้อปูนคอนกรีตสีเทาอ่อน/เข้มตามโหมดเวลา)
+                float concreteGrain = snoise(st * 25.0) * 0.08 + snoise(st * 80.0) * 0.03;
+                float dirtNoise = snoise(st * 0.8) * 0.12; // คราบฝุ่นดินด่างบนปูน
+                
+                vec3 dayConcrete = vec3(0.62, 0.63, 0.65) + vec3(concreteGrain - dirtNoise);
+                vec3 nightConcrete = vec3(0.18, 0.20, 0.24) + vec3((concreteGrain - dirtNoise) * 0.5);
+                vec3 concreteColor = mix(dayConcrete, nightConcrete, uIsNight);
 
-                // 2. Road Markings (เส้นจราจร)
-                // เส้นเหลืองคู่กลางถนน (Center Double Yellow Line)
+                // 2. Concrete Slab Expansion Joints (ร่องยาแนวแผ่นคอนกรีตตัดเป็นช่องบล็อก)
+                vec2 grid = abs(fract(st * 0.25 - 0.5) - 0.5);
+                float lineGrid = smoothstep(0.02, 0.0, min(grid.x, grid.y));
+                vec3 jointColor = mix(vec3(0.2, 0.2, 0.2), vec3(0.03, 0.03, 0.04), uIsNight);
+                concreteColor = mix(concreteColor, jointColor, lineGrid * 0.85);
+
+                // 3. Road Markings on Concrete (เส้นจราจรสีขาว/สีเหลือง)
                 float centerDist = abs(st.x);
-                float yellowLine = smoothstep(0.12, 0.10, centerDist) - smoothstep(0.04, 0.02, centerDist);
-                
-                // เส้นขอบทางสีขาวด้านข้าง (Outer White Lines)
-                float whiteSideLine = smoothstep(8.1, 7.9, abs(st.x)) - smoothstep(7.7, 7.5, abs(st.x));
-                
-                // เส้นปะสีขาวขนาน (Dashed Lines)
-                float dashPattern = step(0.5, fract(st.y * 0.4));
-                float dashedLine = (smoothstep(4.1, 3.9, centerDist) - smoothstep(3.9, 3.7, centerDist)) * dashPattern;
+                float yellowLine = smoothstep(0.10, 0.08, centerDist) - smoothstep(0.03, 0.01, centerDist);
+                float dashPattern = step(0.5, fract(st.y * 0.35));
+                float dashedWhite = (smoothstep(4.0, 3.8, centerDist) - smoothstep(3.8, 3.6, centerDist)) * dashPattern;
 
-                vec3 lineYellow = vec3(0.95, 0.75, 0.1); // สีเหลืองสะท้อนแสง
-                vec3 lineWhite = vec3(0.85, 0.85, 0.9);   // สีขาว
+                vec3 lineYellow = vec3(0.9, 0.7, 0.15);
+                vec3 lineWhite = vec3(0.88, 0.88, 0.92);
 
-                vec3 baseColor = asphaltColor;
-                baseColor = mix(baseColor, lineYellow, yellowLine * 0.9);
-                baseColor = mix(baseColor, lineWhite, whiteSideLine * 0.8);
-                baseColor = mix(baseColor, lineWhite, dashedLine * 0.8);
+                vec3 baseColor = concreteColor;
+                baseColor = mix(baseColor, lineYellow, yellowLine * 0.85);
+                baseColor = mix(baseColor, lineWhite, dashedWhite * 0.8);
 
-                // 3. Mouse Interactive Glow
+                // 4. Mouse Interactive Glow
                 vec3 glowColor = vec3(0.1, 0.7, 1.0);
                 baseColor += glowColor * vInteraction * 1.5;
 
-                // 4. Lighting & Wet Puddle Reflections
+                // 5. Lighting & Wet Puddle Reflections on Concrete
                 vec3 lightDir = normalize(vec3(8.0, 15.0, 8.0));
-                float diff = max(dot(normal, lightDir), uIsNight > 0.5 ? 0.2 : 0.5);
+                float diff = max(dot(normal, lightDir), uIsNight > 0.5 ? 0.25 : 0.65);
                 
                 vec3 viewDir = normalize(cameraPosition - vPosition);
                 vec3 halfDir = normalize(lightDir + viewDir);
                 
-                // Puddle Mask (แอ่งน้ำขังสะท้อนแสง)
-                float puddleMask = smoothstep(0.1, 0.4, snoise(st * 0.5));
-                float specPower = mix(16.0, 128.0, puddleMask); // บริเวณแอ่งน้ำจะสะท้อนคมกว่า
+                // แอ่งน้ำขังเงาวาวบนพื้นปูน (Puddles)
+                float puddleMask = smoothstep(0.0, 0.35, snoise(st * 0.6));
+                float specPower = mix(12.0, 90.0, puddleMask);
                 float spec = pow(max(dot(normal, halfDir), 0.0), specPower);
 
-                vec3 finalColor = baseColor * diff + vec3(spec * (puddleMask * 0.8 + 0.2));
+                vec3 finalColor = baseColor * diff + vec3(spec * (puddleMask * 0.6 + 0.15));
 
                 gl_FragColor = vec4(finalColor, 1.0);
             }
