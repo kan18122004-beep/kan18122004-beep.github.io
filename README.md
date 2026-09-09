@@ -37,52 +37,52 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 40px;
+            padding: 30px;
         }
         .header {
             pointer-events: auto;
             background: rgba(10, 10, 15, 0.65);
             backdrop-filter: blur(12px);
-            padding: 24px 32px;
+            padding: 20px 28px;
             border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            max-width: 420px;
+            max-width: 380px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.5);
             transform: translateY(0);
             transition: transform 0.3s ease;
         }
         .header:hover {
-            transform: translateY(-5px);
+            transform: translateY(-3px);
         }
         h1 {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 700;
             letter-spacing: -0.5px;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             background: linear-gradient(135deg, #a5f3fc, #0284c7);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         .subtitle {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             color: #94a3b8;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             font-weight: 500;
         }
         p.desc {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #cbd5e1;
-            line-height: 1.5;
+            line-height: 1.4;
         }
         .badge-container {
             display: flex;
-            gap: 8px;
-            margin-top: 12px;
+            gap: 6px;
+            margin-top: 10px;
             flex-wrap: wrap;
         }
         .badge {
-            font-size: 0.7rem;
-            padding: 4px 10px;
+            font-size: 0.65rem;
+            padding: 3px 8px;
             border-radius: 20px;
             background: rgba(56, 189, 248, 0.15);
             color: #38bdf8;
@@ -90,17 +90,71 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
+        /* Control Panel Styles */
+        .controls-panel {
+            pointer-events: auto;
+            background: rgba(10, 10, 15, 0.65);
+            backdrop-filter: blur(12px);
+            padding: 16px 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 20px;
+            align-self: flex-start;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .control-label {
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+        .toggle-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .toggle-btn:hover {
+            background: rgba(56, 189, 248, 0.2);
+            border-color: #38bdf8;
+        }
+        .toggle-btn.active {
+            background: #0284c7;
+            border-color: #38bdf8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+        }
+
+        .bottom-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            width: 100%;
+        }
+
         .controls-hint {
             pointer-events: auto;
-            align-self: flex-start;
             background: rgba(10, 10, 15, 0.5);
             backdrop-filter: blur(8px);
-            padding: 12px 20px;
+            padding: 10px 16px;
             border-radius: 30px;
             border: 1px solid rgba(255, 255, 255, 0.08);
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #94a3b8;
         }
+
         #loading {
             position: absolute;
             top: 50%;
@@ -153,16 +207,30 @@
         <div class="header">
             <h1>kan18122004-beep</h1>
             <div class="subtitle">3D Developer & Technical Artist</div>
-            <p class="desc">ยินดีต้อนรับสู่ Interactive 3D Portfolio นำเสนอโมเดล PBR คุณภาพสูง ระบบจำลองฝนตกด้วย Particle System และพื้นหินผสมหญ้าพร้อม Custom Shader ทำปฏิกิริยากับการเลื่อนเมาส์</p>
+            <p class="desc">Interactive 3D Portfolio นำเสนอโมเดล PBR คุณภาพสูง ระบบจำลองฝนตก และพื้นหินผสมหญ้าพร้อม Custom Shader ทำปฏิกิริยากับการเลื่อนเมาส์</p>
             <div class="badge-container">
                 <span class="badge">Three.js</span>
                 <span class="badge">GLSL Shader</span>
                 <span class="badge">PBR Material</span>
-                <span class="badge">Rain Sim</span>
             </div>
         </div>
-        <div class="controls-hint">
-            💡 ใช้เมาส์คลิกซ้ายเพื่อหมุน / ล้อเมาส์เพื่อซูม / เลื่อนเมาส์เพื่อส่งคลื่นพลังลงบนพื้นหิน
+
+        <div class="bottom-bar">
+            <!-- Control Panel -->
+            <div class="controls-panel">
+                <div class="control-group">
+                    <span class="control-label">🌧️ ฝนตก:</span>
+                    <button id="btn-rain" class="toggle-btn active">เปิด</button>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">☀️ เวลา:</span>
+                    <button id="btn-time" class="toggle-btn">กลางคืน 🌙</button>
+                </div>
+            </div>
+
+            <div class="controls-hint">
+                💡 ใช้เมาส์คลิกซ้ายเพื่อหมุน / ล้อเมาส์เพื่อซูม / เลื่อนเมาส์เพื่อส่งคลื่นพลังลงบนพื้นหิน
+            </div>
         </div>
     </div>
 
@@ -177,7 +245,11 @@
         // --- 1. SETUP SCENE, CAMERA, RENDERER ---
         const container = document.getElementById('webgl-container');
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x0a0d14, 0.035);
+        
+        // Fog Preset สำหรับกลางคืน
+        const fogNight = new THREE.FogExp2(0x0a0d14, 0.035);
+        const fogDay = new THREE.FogExp2(0x94a3b8, 0.015);
+        scene.fog = fogNight;
 
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
         camera.position.set(0, 2.5, 7.5);
@@ -194,16 +266,16 @@
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-        controls.maxPolarAngle = Math.PI / 2 - 0.01; // ห้ามมุมกล้องลงใต้พื้น
+        controls.maxPolarAngle = Math.PI / 2 - 0.01;
         controls.minDistance = 2;
         controls.maxDistance = 15;
         controls.target.set(0, 1, 0);
 
-        // --- 2. LIGHTING & ENVIRONMENT (PBR Lighting) ---
-        const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.6);
+        // --- 2. LIGHTING & ENVIRONMENT (Day/Night Presets) ---
+        const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.4);
         scene.add(ambientLight);
 
-        const mainLight = new THREE.DirectionalLight(0x38bdf8, 2.5);
+        const mainLight = new THREE.DirectionalLight(0x38bdf8, 2.0);
         mainLight.position.set(5, 12, 5);
         mainLight.castShadow = true;
         mainLight.shadow.mapSize.width = 2048;
@@ -211,11 +283,11 @@
         mainLight.shadow.bias = -0.0001;
         scene.add(mainLight);
 
-        const rimLight = new THREE.PointLight(0x818cf8, 4, 10);
+        const rimLight = new THREE.PointLight(0x818cf8, 3, 10);
         rimLight.position.set(-4, 3, -3);
         scene.add(rimLight);
 
-        // โหลด HDRI Map ให้กับ PBR Material Refraction/Reflection
+        // HDRI Environment Mapping
         new RGBELoader()
             .setPath('https://threejs.org/examples/textures/equirectangular/')
             .load('royal_esplanade_1k.hdr', function (texture) {
@@ -224,7 +296,6 @@
             });
 
         // --- 3. ADVANCED GLSL SHADER (Interactive Ground with Moss & Ripple) ---
-        // Vertex Shader: คำนวณ Procedural Bump, หญ้าเจริญเติบโต และคลื่นจาก Mouse
         const groundVertexShader = `
             uniform float uTime;
             uniform vec3 uMouseWorld;
@@ -234,7 +305,6 @@
             varying float vMossMask;
             varying float vInteraction;
 
-            // Simplex Noise Function
             vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
             vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
             vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
@@ -264,20 +334,15 @@
                 vUv = uv;
                 vec3 pos = position;
                 
-                // Procedural Rock Displacement
                 float rockNoise = snoise(pos.xz * 0.8) * 0.25 + snoise(pos.xz * 3.0) * 0.05;
-                
-                // Interaction with Mouse (Ripple Wave)
                 float dist = distance(pos.xz, uMouseWorld.xz);
                 float wave = sin(dist * 8.0 - uTime * 6.0) * exp(-dist * 1.5) * 0.15;
                 
                 pos.y += rockNoise + wave;
 
-                // Pass info to Fragment Shader
                 vPosition = (modelMatrix * vec4(pos, 1.0)).xyz;
                 vNormal = normalMatrix * normal;
                 
-                // Mask สำหรับตำแหน่งหญ้าเกาะตามซอกหิน (ใช้ Noise)
                 vMossMask = smoothstep(0.0, 0.4, snoise(pos.xz * 2.5));
                 vInteraction = exp(-dist * 2.0);
 
@@ -285,9 +350,9 @@
             }
         `;
 
-        // Fragment Shader: เรนเดอร์ Texture หินผสมหญ้าแบบ PBR Procedural Lighting
         const groundFragmentShader = `
             uniform float uTime;
+            uniform float uIsNight;
             varying vec2 vUv;
             varying vec3 vPosition;
             varying vec3 vNormal;
@@ -297,26 +362,16 @@
             void main() {
                 vec3 normal = normalize(vNormal);
                 
-                // Base Rock Color (หินสีเทาเข้ม)
-                vec3 rockColor = vec3(0.12, 0.14, 0.16);
-                
-                // Moss Color (สีหญ้าสด/ตะไคร่น้ำ)
-                vec3 mossColor = vec3(0.1, 0.45, 0.15);
-                
-                // Glowing Interaction Color (แสงโกลว์เมื่อเมาส์เข้าใกล้)
+                vec3 rockColor = mix(vec3(0.35, 0.35, 0.38), vec3(0.12, 0.14, 0.16), uIsNight);
+                vec3 mossColor = mix(vec3(0.2, 0.65, 0.2), vec3(0.1, 0.45, 0.15), uIsNight);
                 vec3 glowColor = vec3(0.1, 0.7, 1.0);
 
-                // Mix Rock and Moss
                 vec3 baseColor = mix(rockColor, mossColor, vMossMask);
-                
-                // Add Mouse Glow Effect
                 baseColor += glowColor * vInteraction * 1.5;
 
-                // Basic Lighting inside Shader
                 vec3 lightDir = normalize(vec3(5.0, 10.0, 5.0));
-                float diff = max(dot(normal, lightDir), 0.2);
+                float diff = max(dot(normal, lightDir), uIsNight > 0.5 ? 0.2 : 0.5);
                 
-                // PBR Wetness Effect (เงาสะท้อนจากน้ำบนหิน)
                 vec3 viewDir = normalize(cameraPosition - vPosition);
                 vec3 halfDir = normalize(lightDir + viewDir);
                 float spec = pow(max(dot(normal, halfDir), 0.0), 32.0);
@@ -329,7 +384,8 @@
 
         const groundUniforms = {
             uTime: { value: 0 },
-            uMouseWorld: { value: new THREE.Vector3(999, 0, 999) }
+            uMouseWorld: { value: new THREE.Vector3(999, 0, 999) },
+            uIsNight: { value: 1.0 } // 1.0 = กลางคืน, 0.0 = กลางวัน
         };
 
         const groundMaterial = new THREE.ShaderMaterial({
@@ -344,11 +400,9 @@
         groundMesh.receiveShadow = true;
         scene.add(groundMesh);
 
-        // --- 4. PUBLIC PBR MODEL LOADING (GLTF/GLB) ---
-        // ใช้โมเดล Damaged Helmet (PBR Metallic Roughness) จาก Khronos Group
+        // --- 4. PUBLIC PBR MODEL LOADING ---
         const loader = new GLTFLoader();
         const loadingEl = document.getElementById('loading');
-
         const modelUrl = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb';
 
         loader.load(
@@ -367,19 +421,12 @@
 
                 scene.add(model);
                 
-                // ซ่อน Screen Loading
                 loadingEl.style.opacity = '0';
                 setTimeout(() => loadingEl.style.display = 'none', 500);
-            },
-            (xhr) => {
-                // Progress
-            },
-            (error) => {
-                console.error('An error happened loading the model:', error);
             }
         );
 
-        // --- 5. RAIN SIMULATION SYSTEM (Particles) ---
+        // --- 5. RAIN SIMULATION SYSTEM ---
         const rainCount = 3000;
         const rainGeometry = new THREE.BufferGeometry();
         const rainPositions = new Float32Array(rainCount * 3);
@@ -405,11 +452,14 @@
         const rainParticles = new THREE.Points(rainGeometry, rainMaterial);
         scene.add(rainParticles);
 
+        let isRainActive = true; // สถานะการเปิด/ปิดฝน
+
         function updateRain() {
+            if (!isRainActive) return;
+
             const positions = rainGeometry.attributes.position.array;
             for (let i = 0; i < rainCount; i++) {
                 positions[i * 3 + 1] -= rainVelocities[i];
-                // เมื่อหยดน้ำตกถึงพื้น ให้รีเซ็ตกลับไปข้างบน
                 if (positions[i * 3 + 1] < 0) {
                     positions[i * 3 + 1] = 10;
                 }
@@ -417,7 +467,50 @@
             rainGeometry.attributes.position.needsUpdate = true;
         }
 
-        // --- 6. MOUSE INTERACTION (RAYCASTING TO SHADER) ---
+        // --- 6. CONTROLS INTERACTION (Day/Night & Rain Toggle) ---
+        const btnRain = document.getElementById('btn-rain');
+        const btnTime = document.getElementById('btn-time');
+        let isNight = true;
+
+        // สลับฝน
+        btnRain.addEventListener('click', () => {
+            isRainActive = !isRainActive;
+            rainParticles.visible = isRainActive;
+            btnRain.classList.toggle('active', isRainActive);
+            btnRain.innerText = isRainActive ? 'เปิด' : 'ปิด';
+        });
+
+        // สลับกลางวัน / กลางคืน
+        btnTime.addEventListener('click', () => {
+            isNight = !isNight;
+            groundUniforms.uIsNight.value = isNight ? 1.0 : 0.0;
+
+            if (isNight) {
+                // โหมดกลางคืน
+                scene.fog = fogNight;
+                scene.background = null;
+                renderer.toneMappingExposure = 1.2;
+                ambientLight.color.setHex(0xdbeafe);
+                ambientLight.intensity = 0.4;
+                mainLight.color.setHex(0x38bdf8);
+                mainLight.intensity = 2.0;
+                rimLight.intensity = 3;
+                btnTime.innerText = 'กลางคืน 🌙';
+            } else {
+                // โหมดกลางวัน
+                scene.fog = fogDay;
+                scene.background = new THREE.Color(0xcfe2fe);
+                renderer.toneMappingExposure = 1.0;
+                ambientLight.color.setHex(0xffffff);
+                ambientLight.intensity = 1.2;
+                mainLight.color.setHex(0xfffaed);
+                mainLight.intensity = 3.5;
+                rimLight.intensity = 0.5;
+                btnTime.innerText = 'กลางวัน ☀️';
+            }
+        });
+
+        // --- 7. MOUSE INTERACTION (Raycasting) ---
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
@@ -433,7 +526,7 @@
             }
         });
 
-        // --- 7. RESIZE & ANIMATION LOOP ---
+        // --- 8. RESIZE & ANIMATION LOOP ---
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -447,16 +540,10 @@
 
             const elapsedTime = clock.getElapsedTime();
 
-            // Update Shader Time
             groundUniforms.uTime.value = elapsedTime;
-
-            // Update Rain Simulation
             updateRain();
-
-            // Update Orbit Controls
             controls.update();
 
-            // Render
             renderer.render(scene, camera);
         }
 
