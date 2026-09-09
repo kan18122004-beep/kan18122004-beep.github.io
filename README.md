@@ -27,7 +27,6 @@
       left: 0;
       z-index: 1;
     }
-    /* UI Overlay */
     .ui-layer {
       position: absolute;
       top: 0;
@@ -35,7 +34,7 @@
       width: 100%;
       height: 100%;
       z-index: 10;
-      pointer-events: none; /* เพื่อให้คลิกผ่านไปยัง 3D Canvas ได้ */
+      pointer-events: none;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -94,7 +93,6 @@
     }
   </style>
 
-  <!-- Import Maps for Three.js ES Modules -->
   <script type="importmap">
     {
       "imports": {
@@ -115,7 +113,7 @@
       <h1>kan18122004-beep</h1>
       <p>3D Technical Artist & Interactive Developer Portfolio</p>
       <p style="margin-top: 0.5rem; font-size: 0.8rem; color: #6b7280;">
-        Interactive Scene with Custom Shaders, Rain Simulation, and PBR Helmet Model.
+        Interactive Scene with Custom Shaders, Rain Simulation, and Flight Helmet Model.
       </p>
     </div>
 
@@ -142,7 +140,7 @@
     scene.fog = new THREE.FogExp2(0x050508, 0.035);
 
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 2.5, 5);
+    camera.position.set(0, 1.8, 3.5);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -157,13 +155,13 @@
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2 - 0.01; // ห้ามทะลุลงใต้พื้น
-    controls.minDistance = 2;
-    controls.maxDistance = 10;
-    controls.target.set(0, 1.2, 0);
+    controls.maxPolarAngle = Math.PI / 2 - 0.01;
+    controls.minDistance = 1.5;
+    controls.maxDistance = 8;
+    controls.target.set(0, 0.6, 0);
 
     // --- Lighting Setup ---
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
     scene.add(ambientLight);
 
     const dirLight = new THREE.DirectionalLight(0x4facfe, 2.5);
@@ -184,8 +182,7 @@
       scene.environment = texture;
     });
 
-    // --- Advanced Custom GLSL Shader Ground (Interactive Interactive Stone Ground) ---
-    // ใช้ Perlin Noise และ Wave Equation ภายใน Fragment Shader
+    // --- Advanced Custom GLSL Shader Ground ---
     const customGroundVertexShader = `
       varying vec2 vUv;
       varying vec3 vWorldPosition;
@@ -193,7 +190,6 @@
       uniform float uTime;
       uniform vec3 uMouseWorld;
 
-      // Simplex Noise Function
       vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
       vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
       vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
@@ -223,10 +219,7 @@
         vUv = uv;
         vec3 pos = position;
 
-        // หินขรุขระจาก Noise
         float stonePattern = snoise(uv * 12.0) * 0.08;
-        
-        // คลื่นตอบสนองกับตำแหน่งเมาส์
         float distToMouse = distance(position.xz, uMouseWorld.xz);
         float wave = sin(distToMouse * 10.0 - uTime * 6.0) * exp(-distToMouse * 1.5) * 0.15;
 
@@ -248,23 +241,17 @@
       uniform vec3 uMouseWorld;
 
       void main() {
-        // Base Stone Texture Colors
         vec3 baseColor = vec3(0.08, 0.09, 0.12);
-        vec3 highlightColor = vec3(0.0, 0.95, 0.99); // Blue Glow Effect
+        vec3 highlightColor = vec3(0.0, 0.95, 0.99);
 
-        // คำนวณระยะห่างจากเมาส์สำหรับแสง Glow
         float dist = distance(vWorldPosition.xz, uMouseWorld.xz);
         float glow = exp(-dist * 1.8) * 1.2;
 
-        // คำนวณ Grid Pattern เพิ่มความเป็น Sci-Fi Tech
         vec2 grid = abs(fract(vUv * 30.0 - 0.5) - 0.5) / fwidth(vUv * 30.0);
         float line = min(grid.x, grid.y);
         float gridPattern = 1.0 - min(line, 1.0);
 
         vec3 finalColor = mix(baseColor, highlightColor, glow + (gridPattern * 0.15));
-
-        // ความเงาของน้ำนิ่งบนพื้นหิน
-        float roughness = 0.2;
         
         gl_FragColor = vec4(finalColor, 1.0);
       }
@@ -288,7 +275,7 @@
     ground.receiveShadow = true;
     scene.add(ground);
 
-    // --- Rain Simulation (Particle System) ---
+    // --- Rain Simulation ---
     const rainCount = 3000;
     const rainGeometry = new THREE.BufferGeometry();
     const rainPositions = new Float32Array(rainCount * 3);
@@ -314,26 +301,25 @@
     const rainParticles = new THREE.Points(rainGeometry, rainMaterial);
     scene.add(rainParticles);
 
-    // Update Rain Simulation Animation
     function updateRain() {
       const positions = rainGeometry.attributes.position.array;
       for (let i = 0; i < rainCount; i++) {
         positions[i * 3 + 1] -= rainVelocities[i];
         if (positions[i * 3 + 1] < 0) {
-          positions[i * 3 + 1] = 10; // รีเซ็ตสายฝนให้กลับไปข้างบนเมื่อตกถึงพื้น
+          positions[i * 3 + 1] = 10;
         }
       }
       rainGeometry.attributes.position.needsUpdate = true;
     }
 
-    // --- Load GLTF/GLB PBR Model (Damaged Helmet Public Model) ---
+    // --- Load Flight Helmet PBR Model ---
     const loader = new GLTFLoader();
-    const modelUrl = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb';
+    const modelUrl = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/FlightHelmet/glTF-Binary/FlightHelmet.glb';
 
     loader.load(modelUrl, (gltf) => {
       const model = gltf.scene;
-      model.position.set(0, 1.2, 0);
-      model.scale.set(1.1, 1.1, 1.1);
+      model.position.set(0, 0, 0);
+      model.scale.set(2.5, 2.5, 2.5);
 
       model.traverse((child) => {
         if (child.isMesh) {
@@ -344,14 +330,13 @@
 
       scene.add(model);
 
-      // ซ่อนหน้าจอ Loading
       const loadingEl = document.getElementById('loading');
       if (loadingEl) loadingEl.style.opacity = '0';
     }, undefined, (error) => {
       console.error('An error occurred while loading GLTF model:', error);
     });
 
-    // --- Mouse Interaction Raycasting for Ground Shader ---
+    // --- Mouse Interaction Raycasting ---
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2(-999, -999);
 
@@ -381,17 +366,10 @@
       requestAnimationFrame(animate);
 
       const elapsedTime = clock.getElapsedTime();
-
-      // อัปเดต Shader Time
       groundUniforms.uTime.value = elapsedTime;
 
-      // อัปเดต Rain Simulation
       updateRain();
-
-      // อัปเดต Controls
       controls.update();
-
-      // Render Scene
       renderer.render(scene, camera);
     }
 
