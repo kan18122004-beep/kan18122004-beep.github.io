@@ -207,12 +207,12 @@
         <div class="header">
             <h1>kan18122004-beep</h1>
             <div class="subtitle">3D Developer & Technical Artist</div>
-            <p class="desc">Interactive 3D Portfolio นำเสนอโมเดลบ้านสไตล์ญี่ปุ่น (PBR) บนฐานหินผสมหญ้า พร้อมระบบฝนตก ปรับเวลากลางวัน-กลางคืน และ Custom Shader ปรับแต่งตามเมาส์</p>
+            <p class="desc">Interactive 3D Portfolio นำเสนอโมเดลบ้านสไตล์ญี่ปุ่น (PBR) บนพื้นถนนยางมะตอยเปียกน้ำ พร้อมระบบฝนตก ปรับเวลากลางวัน-กลางคืน และ Custom Shader ปรับแต่งตามเมาส์</p>
             <div class="badge-container">
                 <span class="badge">Three.js</span>
-                <span class="badge">GLSL Shader</span>
+                <span class="badge">Road Shader</span>
                 <span class="badge">3D House</span>
-                <span class="badge">PBR Material</span>
+                <span class="badge">PBR Wet Asphalt</span>
             </div>
         </div>
 
@@ -230,7 +230,7 @@
             </div>
 
             <div class="controls-hint">
-                💡 ใช้เมาส์คลิกซ้ายเพื่อหมุน / ล้อเมาส์เพื่อซูม / เลื่อนเมาส์เพื่อส่งคลื่นพลังลงบนพื้นหิน
+                💡 ใช้เมาส์คลิกซ้ายเพื่อหมุน / ล้อเมาส์เพื่อซูม / เลื่อนเมาส์เพื่อส่งคลื่นพลังลงบนพื้นถนน
             </div>
         </div>
     </div>
@@ -295,14 +295,13 @@
                 scene.environment = texture;
             });
 
-        // --- 3. ADVANCED GLSL SHADER (Interactive Ground with Moss) ---
+        // --- 3. ADVANCED GLSL SHADER (Interactive Wet Asphalt Road) ---
         const groundVertexShader = `
             uniform float uTime;
             uniform vec3 uMouseWorld;
             varying vec2 vUv;
             varying vec3 vPosition;
             varying vec3 vNormal;
-            varying float vMossMask;
             varying float vInteraction;
 
             vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -334,16 +333,14 @@
                 vUv = uv;
                 vec3 pos = position;
                 
-                float rockNoise = snoise(pos.xz * 0.5) * 0.3 + snoise(pos.xz * 2.0) * 0.08;
+                // Micro Roughness / Ripples on Asphalt
                 float dist = distance(pos.xz, uMouseWorld.xz);
-                float wave = sin(dist * 8.0 - uTime * 6.0) * exp(-dist * 1.5) * 0.15;
+                float wave = sin(dist * 10.0 - uTime * 6.0) * exp(-dist * 1.5) * 0.08;
                 
-                pos.y += rockNoise + wave;
+                pos.y += wave;
 
                 vPosition = (modelMatrix * vec4(pos, 1.0)).xyz;
                 vNormal = normalMatrix * normal;
-                
-                vMossMask = smoothstep(0.0, 0.4, snoise(pos.xz * 2.0));
                 vInteraction = exp(-dist * 2.0);
 
                 gl_Position = projectionMatrix * viewMatrix * vec4(vPosition, 1.0);
@@ -356,27 +353,79 @@
             varying vec2 vUv;
             varying vec3 vPosition;
             varying vec3 vNormal;
-            varying float vMossMask;
             varying float vInteraction;
+
+            // Simplex Noise Generator for Asphalt Grain & Puddles
+            vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+            float snoise(vec2 v){
+                const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+                vec2 i  = floor(v + dot(v, C.yy) );
+                vec2 x0 = v -   i + dot(i, C.xx);
+                vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                vec4 x12 = x0.xyxy + C.xxzz;
+                x12.xy -= i1;
+                i = mod289(i);
+                vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
+                vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+                m = m*m ; m = m*m ;
+                vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                vec3 h = abs(x) - 0.5;
+                vec3 ox = floor(x + 0.5);
+                vec3 a0 = x - ox;
+                m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
+                vec3 g;
+                g.x  = a0.x  * x0.x  + h.x  * x0.y;
+                g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+                return 130.0 * dot(m, g);
+            }
 
             void main() {
                 vec3 normal = normalize(vNormal);
-                
-                vec3 rockColor = mix(vec3(0.35, 0.35, 0.38), vec3(0.12, 0.14, 0.16), uIsNight);
-                vec3 mossColor = mix(vec3(0.2, 0.65, 0.2), vec3(0.1, 0.45, 0.15), uIsNight);
-                vec3 glowColor = vec3(0.1, 0.7, 1.0);
+                vec2 st = vPosition.xz;
 
-                vec3 baseColor = mix(rockColor, mossColor, vMossMask);
+                // 1. Asphalt Base Texture (เม็ดหินยางมะตอย)
+                float asphaltGrain = snoise(st * 40.0) * 0.05 + snoise(st * 120.0) * 0.02;
+                vec3 asphaltColor = mix(vec3(0.18, 0.18, 0.20), vec3(0.05, 0.05, 0.06), uIsNight) + vec3(asphaltGrain);
+
+                // 2. Road Markings (เส้นจราจร)
+                // เส้นเหลืองคู่กลางถนน (Center Double Yellow Line)
+                float centerDist = abs(st.x);
+                float yellowLine = smoothstep(0.12, 0.10, centerDist) - smoothstep(0.04, 0.02, centerDist);
+                
+                // เส้นขอบทางสีขาวด้านข้าง (Outer White Lines)
+                float whiteSideLine = smoothstep(8.1, 7.9, abs(st.x)) - smoothstep(7.7, 7.5, abs(st.x));
+                
+                // เส้นปะสีขาวขนาน (Dashed Lines)
+                float dashPattern = step(0.5, fract(st.y * 0.4));
+                float dashedLine = (smoothstep(4.1, 3.9, centerDist) - smoothstep(3.9, 3.7, centerDist)) * dashPattern;
+
+                vec3 lineYellow = vec3(0.95, 0.75, 0.1); // สีเหลืองสะท้อนแสง
+                vec3 lineWhite = vec3(0.85, 0.85, 0.9);   // สีขาว
+
+                vec3 baseColor = asphaltColor;
+                baseColor = mix(baseColor, lineYellow, yellowLine * 0.9);
+                baseColor = mix(baseColor, lineWhite, whiteSideLine * 0.8);
+                baseColor = mix(baseColor, lineWhite, dashedLine * 0.8);
+
+                // 3. Mouse Interactive Glow
+                vec3 glowColor = vec3(0.1, 0.7, 1.0);
                 baseColor += glowColor * vInteraction * 1.5;
 
+                // 4. Lighting & Wet Puddle Reflections
                 vec3 lightDir = normalize(vec3(8.0, 15.0, 8.0));
                 float diff = max(dot(normal, lightDir), uIsNight > 0.5 ? 0.2 : 0.5);
                 
                 vec3 viewDir = normalize(cameraPosition - vPosition);
                 vec3 halfDir = normalize(lightDir + viewDir);
-                float spec = pow(max(dot(normal, halfDir), 0.0), 32.0);
+                
+                // Puddle Mask (แอ่งน้ำขังสะท้อนแสง)
+                float puddleMask = smoothstep(0.1, 0.4, snoise(st * 0.5));
+                float specPower = mix(16.0, 128.0, puddleMask); // บริเวณแอ่งน้ำจะสะท้อนคมกว่า
+                float spec = pow(max(dot(normal, halfDir), 0.0), specPower);
 
-                vec3 finalColor = baseColor * diff + vec3(spec * 0.4);
+                vec3 finalColor = baseColor * diff + vec3(spec * (puddleMask * 0.8 + 0.2));
 
                 gl_FragColor = vec4(finalColor, 1.0);
             }
@@ -400,7 +449,7 @@
         groundMesh.receiveShadow = true;
         scene.add(groundMesh);
 
-        // --- 4. HOUSE 3D MODEL LOADING (WITH DRACO DECODER) ---
+        // --- 4. HOUSE 3D MODEL LOADING ---
         const dracoLoader = new DRACOLoader();
         dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
 
@@ -408,18 +457,16 @@
         loader.setDRACOLoader(dracoLoader);
 
         const loadingEl = document.getElementById('loading');
-        
-        // โมเดลบ้านอาคารสไตล์ญี่ปุ่น (Littlest Tokyo)
         const houseModelUrl = 'https://threejs.org/examples/models/gltf/LittlestTokyo.glb';
 
-        let mixer; // Animation Mixer สำหรับโมเดลบ้านที่มีอนิเมชันเคลื่อนไหว
+        let mixer;
 
         loader.load(
             houseModelUrl,
             (gltf) => {
                 const model = gltf.scene;
                 model.position.set(0, 0.2, 0);
-                model.scale.set(0.008, 0.008, 0.008); // ปรับ Scale ให้พอดีกับฉาก
+                model.scale.set(0.008, 0.008, 0.008);
                 
                 model.traverse((child) => {
                     if (child.isMesh) {
@@ -430,7 +477,6 @@
 
                 scene.add(model);
 
-                // เล่น Animation ของโมเดลบ้าน (รถไฟ/พัดลมหมุน/ไฟ)
                 if (gltf.animations && gltf.animations.length) {
                     mixer = new THREE.AnimationMixer(model);
                     mixer.clipAction(gltf.animations[0]).play();
@@ -444,9 +490,6 @@
                 if (!isNaN(percent)) {
                     document.getElementById('loading-text').innerText = `LOADING HOUSE MODEL... ${percent}%`;
                 }
-            },
-            (error) => {
-                console.error('An error happened loading the model:', error);
             }
         );
 
@@ -561,7 +604,6 @@
             const delta = clock.getDelta();
             const elapsedTime = clock.getElapsedTime();
 
-            // Update Model Animations (ถ้ามี)
             if (mixer) mixer.update(delta);
 
             groundUniforms.uTime.value = elapsedTime;
