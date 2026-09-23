@@ -21,12 +21,20 @@
   <script type="module">
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     import { MindARThree } from 'mindar-face-three';
 
     const mindar = new MindARThree({ container: document.querySelector('#container') });
     const { renderer, scene, camera } = mindar;
+    // สร้าง environment texture แบบห้องสตูดิโอ เพื่อเพิ่มแสงและเงาสะท้อนให้โมเดล
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    const roomEnvironment = new RoomEnvironment();
+    const environmentTarget = pmremGenerator.fromScene(roomEnvironment);
+    scene.environment = environmentTarget.texture;
+    roomEnvironment.dispose();
+    pmremGenerator.dispose();
     scene.add(new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1));
-    const model = await new GLTFLoader().loadAsync('https://storage.googleapis.com/mediapipe-tasks/face_landmarker/raccoon_head.glb');
+    const model = await new GLTFLoader().loadAsync('https://kan18122004-beep.github.io/robothead2.glb');
     
     model.scene.scale.setScalar(2);
     mindar.addAnchor(1).group.add(model.scene);
